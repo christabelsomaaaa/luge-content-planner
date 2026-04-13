@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Skyline Luge · Content Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg: #0f0f0f; --bg2: #161616; --bg3: #1e1e1e; --bg4: #252525;
+  --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
+  --text: #f0ede8; --text2: #9a9690; --text3: #5a5855;
+  --accent: #e8ff47; --accent2: #b8cc28;
+  --tiktok: #2dd4bf; --tiktok-bg: rgba(45,212,191,0.1);
+  --ig: #f472b6;    --ig-bg: rgba(244,114,182,0.1);
+  --both: #fb923c;  --both-bg: rgba(251,146,60,0.1);
+  --green: #86efac; --green-bg: rgba(134,239,172,0.08);
+  --amber: #fbbf24; --amber-bg: rgba(251,191,36,0.08);
+  --purple: #c084fc; --purple-bg: rgba(192,132,252,0.1);
+  --blue: #60a5fa;   --blue-bg: rgba(96,165,250,0.1);
+  --posted: #34d399; --posted-bg: rgba(52,211,153,0.12);
+  --muted-bg: rgba(255,255,255,0.04);
+  --radius: 12px; --radius-sm: 8px;
+  --font: 'DM Sans', sans-serif; --mono: 'DM Mono', monospace;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); height: 100dvh; display: flex; flex-direction: column; overflow: hidden; overscroll-behavior: none; }
+
+/* Layout */
+.app { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
+.header { display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; border-bottom: 1px solid var(--border); background: var(--bg); flex-shrink: 0; gap: 8px; }
+.header-left { display: flex; align-items: center; gap: 9px; }
+.logo-mark { width: 27px; height: 27px; background: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.logo-mark svg { width: 13px; height: 13px; }
+.app-title { font-size: 13px; font-weight: 600; }
+.header-right { display: flex; gap: 5px; align-items: center; }
+.tabs-bar { display: flex; padding: 0 6px; border-bottom: 1px solid var(--border); background: var(--bg); flex-shrink: 0; overflow-x: auto; scrollbar-width: none; }
+.tabs-bar::-webkit-scrollbar { display: none; }
+.tab-btn { padding: 10px 13px; font-size: 13px; font-weight: 500; color: var(--text2); cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; transition: all 0.15s; font-family: var(--font); white-space: nowrap; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-count { background: var(--bg4); color: var(--text2); font-size: 10px; font-family: var(--mono); padding: 1px 5px; border-radius: 10px; margin-left: 4px; }
+.panels { flex: 1; overflow: hidden; min-height: 0; }
+.panel { display: none; height: 100%; flex-direction: column; overflow: hidden; }
+.panel.active { display: flex; }
+
+/* Shared */
+.btn { padding: 7px 11px; font-size: 13px; font-weight: 500; border-radius: var(--radius-sm); cursor: pointer; border: 1px solid var(--border2); background: var(--bg3); color: var(--text); font-family: var(--font); transition: all 0.15s; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
+.btn:active { opacity: 0.7; }
+.btn.primary { background: var(--accent); color: #0f0f0f; border-color: var(--accent); font-weight: 600; }
+.btn.primary:hover { background: var(--accent2); }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--text2); padding: 5px 7px; }
+.btn.ghost:hover { background: var(--muted-bg); color: var(--text); }
+.btn.danger { color: #fca5a5; border-color: rgba(252,165,165,0.2); }
+.btn.sm { padding: 5px 10px; font-size: 12px; }
+
+/* 16px on inputs prevents iOS zoom-on-focus */
+input, select, textarea {
+  width: 100%; padding: 10px 12px; font-size: 16px;
+  border: 1px solid var(--border2); border-radius: var(--radius-sm);
+  background: var(--bg3); color: var(--text); font-family: var(--font);
+  outline: none; transition: border-color 0.15s;
+  -webkit-appearance: none; appearance: none;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a5855' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+select option { background: #1e1e1e; }
+textarea { resize: none; line-height: 1.6; }
+.flabel { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px; }
+
+/* Badges */
+.badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 20px; font-family: var(--mono); }
+.badge.tiktok     { background: var(--tiktok-bg);  color: var(--tiktok); }
+.badge.ig         { background: var(--ig-bg);       color: var(--ig); }
+.badge.both       { background: var(--both-bg);     color: var(--both); }
+.badge.idea       { background: var(--muted-bg);    color: var(--text3); }
+.badge.shortlisted{ background: var(--green-bg);    color: var(--green); }
+.badge.filming    { background: var(--purple-bg);   color: var(--purple); }
+.badge.editing    { background: var(--blue-bg);     color: var(--blue); }
+.badge.scheduled  { background: var(--amber-bg);    color: var(--amber); }
+.badge.posted     { background: var(--posted-bg);   color: var(--posted); }
+
+.scrollable { overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; min-height: 0; }
+.scrollable::-webkit-scrollbar { width: 4px; }
+.scrollable::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 4px; }
+.empty { text-align: center; padding: 60px 24px; color: var(--text3); font-size: 14px; line-height: 1.8; }
+.empty .e-icon { font-size: 28px; margin-bottom: 8px; }
+
+/* Idea Bank */
+.ideas-feed { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.idea-bubble { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.idea-text { font-size: 14px; color: var(--text); line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
+.idea-link-preview { display: flex; align-items: center; gap: 8px; background: var(--bg3); border-radius: var(--radius-sm); padding: 8px 10px; text-decoration: none; }
+.link-url { font-size: 12px; color: var(--tiktok); font-family: var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.link-url.ig { color: var(--ig); }
+.idea-footer { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.idea-time { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-left: auto; }
+.idea-actions { display: flex; gap: 4px; }
+.status-cycle { font-size: 11px; font-family: var(--mono); padding: 3px 8px; border-radius: 20px; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--text3); -webkit-tap-highlight-color: transparent; }
+
+/* Chat input — stays above keyboard on iOS */
+.chat-input-area { padding: 10px 14px; padding-bottom: calc(10px + var(--safe-b)); border-top: 1px solid var(--border); background: var(--bg); flex-shrink: 0; }
+.chat-input-row { display: flex; align-items: flex-end; gap: 8px; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius); padding: 8px 10px; transition: border-color 0.15s; }
+.chat-input-row:focus-within { border-color: var(--accent); }
+/* 16px prevents iOS zoom; use padding not font scaling to compensate */
+.chat-textarea { flex: 1; background: transparent; border: none; color: var(--text); font-family: var(--font); font-size: 16px; resize: none; outline: none; max-height: 100px; line-height: 1.5; padding: 0; min-height: 22px; overflow-y: auto; }
+.chat-textarea::placeholder { color: var(--text3); }
+.chat-send { width: 34px; height: 34px; border-radius: 8px; background: var(--accent); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
+.chat-send:active { opacity: 0.7; }
+.chat-send svg { width: 14px; height: 14px; }
+.chat-hint { font-size: 11px; color: var(--text3); padding: 4px 2px 0; }
+
+/* Calendar */
+.cal-toolbar { padding: 11px 14px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 8px; border-bottom: 1px solid var(--border); }
+.cal-nav-group { display: flex; align-items: center; gap: 8px; }
+.cal-month-label { font-size: 14px; font-weight: 600; min-width: 118px; text-align: center; }
+.cal-legend { display: flex; gap: 10px; padding: 7px 14px; flex-wrap: wrap; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.cal-legend-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text3); font-family: var(--mono); }
+.cal-legend-dot { width: 6px; height: 6px; border-radius: 50%; }
+.cal-body { padding: 8px 10px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+.cal-days-header { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-bottom: 3px; }
+.cal-day-name { text-align: center; font-size: 10px; font-weight: 500; color: var(--text3); text-transform: uppercase; font-family: var(--mono); padding: 3px 0; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.cal-cell { min-height: 60px; border: 1px solid var(--border); border-radius: 6px; padding: 4px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; background: var(--bg2); -webkit-tap-highlight-color: transparent; }
+.cal-cell:active { background: var(--bg3); }
+.cal-cell.other-month { opacity: 0.22; pointer-events: none; }
+.cal-cell.today { border-color: rgba(232,255,71,0.35); }
+.cal-date-num { font-size: 11px; font-weight: 500; color: var(--text2); font-family: var(--mono); line-height: 1; }
+.cal-cell.today .cal-date-num { color: var(--accent); }
+/* Desktop chips hidden on mobile */
+.cal-chip { display: none; font-size: 9px; padding: 2px 4px; border-radius: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.4; }
+.cal-chip.tiktok { background: var(--tiktok-bg); color: var(--tiktok); }
+.cal-chip.ig     { background: var(--ig-bg);     color: var(--ig); }
+.cal-chip.both   { background: var(--both-bg);   color: var(--both); }
+.cal-chip.posted { background: var(--posted-bg); color: var(--posted); }
+/* Mobile dots */
+.cal-dot-row { display: flex; gap: 2px; flex-wrap: wrap; }
+.cal-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+.cal-dot.tiktok { background: var(--tiktok); }
+.cal-dot.ig     { background: var(--ig); }
+.cal-dot.both   { background: var(--both); }
+.cal-dot.posted { background: var(--posted); opacity: 0.7; }
+
+/* Schedule */
+.sched-toolbar { padding: 11px 14px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.sched-list { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.sched-item { display: flex; gap: 11px; border: 1px solid var(--border); border-radius: var(--radius); padding: 11px 12px; cursor: pointer; align-items: flex-start; -webkit-tap-highlight-color: transparent; }
+.sched-item:active { background: var(--bg3); }
+.sched-item.is-posted { background: rgba(52,211,153,0.04); border-color: rgba(52,211,153,0.15); }
+.sched-item.is-scheduled { background: var(--bg2); }
+.sched-date-col { flex-shrink: 0; width: 42px; text-align: center; background: var(--bg4); border-radius: var(--radius-sm); padding: 5px 4px; }
+.sched-day { font-size: 17px; font-weight: 600; line-height: 1; color: var(--accent); font-family: var(--mono); }
+.sched-item.is-posted .sched-day { color: var(--posted); }
+.sched-mon  { font-size: 10px; color: var(--text3); text-transform: uppercase; margin-top: 2px; font-family: var(--mono); }
+.sched-time { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-top: 3px; }
+.sched-content { flex: 1; min-width: 0; }
+.sched-title { font-size: 14px; font-weight: 500; margin-bottom: 3px; }
+.sched-hook  { font-size: 12px; color: var(--text2); font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 5px; }
+.sched-meta  { display: flex; gap: 5px; flex-wrap: wrap; }
+
+/* Modal — bottom sheet on mobile, centered on desktop */
+.modal-wrap { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: flex-end; justify-content: center; z-index: 999; backdrop-filter: blur(3px); }
+.modal-wrap.open { display: flex; }
+.modal { background: var(--bg2); border: 1px solid var(--border2); border-radius: 20px 20px 0 0; width: 100%; max-width: 600px; max-height: 92dvh; display: flex; flex-direction: column; overflow: hidden; }
+.modal-handle { width: 36px; height: 4px; border-radius: 2px; background: var(--border2); margin: 10px auto 0; flex-shrink: 0; }
+.modal-header { padding: 12px 16px 0; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.modal-title { font-size: 15px; font-weight: 600; }
+.modal-close { background: var(--bg4); border: none; color: var(--text2); width: 27px; height: 27px; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
+.modal-body { padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1; min-height: 0; }
+.frow { display: grid; gap: 8px; }
+.frow.cols2 { grid-template-columns: 1fr 1fr; }
+.fgroup { display: flex; flex-direction: column; }
+.platform-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.plat-btn { padding: 8px 14px; font-size: 13px; font-weight: 500; border-radius: 20px; cursor: pointer; border: 1px solid var(--border2); background: var(--bg3); color: var(--text2); font-family: var(--font); -webkit-tap-highlight-color: transparent; }
+.plat-btn.on.tiktok { background: var(--tiktok-bg); color: var(--tiktok); border-color: rgba(45,212,191,0.3); }
+.plat-btn.on.ig     { background: var(--ig-bg);     color: var(--ig);     border-color: rgba(244,114,182,0.3); }
+.copy-block { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+.copy-lbl { padding: 7px 12px; background: var(--bg3); font-size: 11px; font-weight: 500; color: var(--text3); display: flex; justify-content: space-between; align-items: center; text-transform: uppercase; letter-spacing: 0.06em; font-family: var(--mono); border-bottom: 1px solid var(--border); }
+.copy-block textarea, .copy-block input { border: none; border-radius: 0; background: var(--bg2); }
+.copy-block textarea:focus, .copy-block input:focus { box-shadow: inset 0 0 0 1px var(--accent); }
+.reminder-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.gcal-web-link { font-size: 12px; color: var(--accent); text-decoration: none; padding: 5px 10px; border: 1px solid rgba(232,255,71,0.25); border-radius: var(--radius-sm); background: rgba(232,255,71,0.06); white-space: nowrap; }
+.gcal-web-link:active { opacity: 0.7; }
+.reminder-hint { font-size: 11px; color: var(--text3); margin-top: 4px; }
+.modal-footer { padding: 10px 16px; padding-bottom: calc(10px + var(--safe-b)); display: flex; justify-content: space-between; align-items: center; gap: 8px; border-top: 1px solid var(--border); flex-shrink: 0; background: var(--bg2); }
+.modal-footer-right { display: flex; gap: 6px; }
+
+/* Day detail drawer */
+.day-detail { flex-shrink: 0; border-top: 1px solid var(--border); background: var(--bg); max-height: 45dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; display: none; }
+.day-detail.open { display: block; }
+.day-detail-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px 6px; }
+.day-detail-title { font-size: 12px; font-weight: 600; color: var(--text2); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.06em; }
+.day-detail-close { background: none; border: none; color: var(--text3); font-size: 18px; cursor: pointer; padding: 2px 6px; -webkit-tap-highlight-color: transparent; line-height: 1; }
+.day-post-card { margin: 0 14px 8px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.day-post-card:active { background: var(--bg3); }
+.day-post-card.is-posted { border-color: rgba(52,211,153,0.2); background: rgba(52,211,153,0.04); }
+.day-post-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 5px; }
+.day-post-title { font-size: 14px; font-weight: 500; }
+.day-post-time  { font-size: 11px; color: var(--text3); font-family: var(--mono); flex-shrink: 0; }
+.day-post-hook  { font-size: 12px; color: var(--text2); font-style: italic; margin-bottom: 5px; line-height: 1.5; }
+.day-post-body  { font-size: 12px; color: var(--text2); margin-bottom: 5px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+.day-post-tags  { font-size: 11px; color: var(--tiktok); font-family: var(--mono); margin-bottom: 5px; word-break: break-all; }
+.day-post-meta  { display: flex; gap: 5px; flex-wrap: wrap; }
+.day-post-video { display: inline-block; font-size: 12px; color: var(--accent); text-decoration: none; font-family: var(--mono); margin-bottom: 6px; }
+.day-post-video:hover { text-decoration: underline; }
+.day-add-btn { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0 14px 12px; padding: 10px; border: 1px dashed var(--border2); border-radius: var(--radius-sm); background: transparent; color: var(--text3); font-size: 13px; cursor: pointer; font-family: var(--font); -webkit-tap-highlight-color: transparent; width: calc(100% - 28px); }
+.day-add-btn:hover, .day-add-btn:active { border-color: var(--accent); color: var(--accent); }
+
+/* Desktop overrides */
+@media (min-width: 600px) {
+  .modal-wrap { align-items: center; padding: 20px; }
+  .modal { border-radius: 16px; max-height: 88dvh; }
+  .modal-handle { display: none; }
+  .cal-chip { display: block; }
+  .cal-dot-row { display: none; }
+  .cal-cell { min-height: 80px; }
+  .ideas-feed, .sched-list { padding: 16px 20px; }
+  .cal-body { padding: 12px 16px; }
+  .cal-legend { padding: 8px 20px; }
+}
+@media (min-width: 900px) { .cal-cell { min-height: 96px; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-left">
+      <div class="logo-mark">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M3 13L8 3L13 13" stroke="#0f0f0f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 9.5H11" stroke="#0f0f0f" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <span class="app-title">Skyline Luge SG</span>
+    </div>
+    <div class="header-right">
+      <button class="btn sm" onclick="exportJSON()">Export</button>
+      <label class="btn sm" style="cursor:pointer;margin:0">Import<input type="file" accept=".json" onchange="importJSON(event)" style="display:none" /></label>
+      <button class="btn primary sm" onclick="openPostEditor(null)">+ Post</button>
+    </div>
+  </div>
+
+  <div class="tabs-bar">
+    <button class="tab-btn active" data-tab="ideas" onclick="switchTab('ideas')">Idea bank <span class="tab-count" id="cnt-ideas">0</span></button>
+    <button class="tab-btn" data-tab="calendar" onclick="switchTab('calendar')">Calendar</button>
+    <button class="tab-btn" data-tab="schedule" onclick="switchTab('schedule')">Upcoming <span class="tab-count" id="cnt-sched">0</span></button>
+  </div>
+
+  <div class="panels">
+
+    <!-- IDEA BANK -->
+    <div class="panel active" id="panel-ideas">
+      <div class="scrollable" id="ideas-feed">
+        <div class="ideas-feed" id="ideas-list"></div>
+      </div>
+      <div class="chat-input-area">
+        <div class="chat-input-row">
+          <textarea class="chat-textarea" id="idea-input" placeholder="Drop a link, paste a thought, describe a content idea…" rows="1" onkeydown="handleIdeaKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="chat-send" onclick="addIdea()">
+            <svg viewBox="0 0 14 14" fill="none"><path d="M2 7L12 2L7 12L6 8L2 7Z" fill="#0f0f0f" stroke="#0f0f0f" stroke-width="0.5" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <div class="chat-hint">Tap send · paste TikTok / IG links freely</div>
+      </div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div class="panel" id="panel-calendar">
+      <div class="cal-toolbar">
+        <div class="cal-nav-group">
+          <button class="btn ghost sm" onclick="changeMonth(-1)">&#8249;</button>
+          <span class="cal-month-label" id="cal-label"></span>
+          <button class="btn ghost sm" onclick="changeMonth(1)">&#8250;</button>
+        </div>
+        <button class="btn sm" onclick="goToday()">Today</button>
+      </div>
+      <div class="cal-legend">
+        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--tiktok)"></div>TikTok</div>
+        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--ig)"></div>Instagram</div>
+        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--both)"></div>Both</div>
+        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--posted)"></div>Posted</div>
+      </div>
+      <div class="cal-body">
+        <div class="cal-days-header">
+          <div class="cal-day-name">S</div><div class="cal-day-name">M</div><div class="cal-day-name">T</div>
+          <div class="cal-day-name">W</div><div class="cal-day-name">T</div><div class="cal-day-name">F</div><div class="cal-day-name">S</div>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+      <div class="day-detail" id="day-detail">
+        <div class="day-detail-header">
+          <div class="day-detail-title" id="day-detail-title"></div>
+          <button class="day-detail-close" onclick="closeDayDetail()">&#215;</button>
+        </div>
+        <div id="day-detail-body"></div>
+      </div>
+    </div>
+
+    <!-- UPCOMING -->
+    <div class="panel" id="panel-schedule">
+      <div class="sched-toolbar">
+        <div style="font-size:13px;color:var(--text2)">All scheduled posts</div>
+        <button class="btn primary sm" onclick="openPostEditor(null)">+ New post</button>
+      </div>
+      <div class="scrollable"><div class="sched-list" id="sched-list"></div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- POST EDITOR -->
+<div class="modal-wrap" id="modal-wrap" onclick="closeModalOutside(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">New post</div>
+      <button class="modal-close" onclick="closeModal()">&#215;</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="fgroup">
+        <div class="flabel">Title</div>
+        <input type="text" id="m-title" placeholder="e.g. First-timer POV luge reaction" autocomplete="off" />
+      </div>
+
+      <div class="frow cols2">
+        <div class="fgroup">
+          <div class="flabel">Platform</div>
+          <div class="platform-btns">
+            <button class="plat-btn tiktok" id="plat-tiktok" onclick="togglePlat('tiktok')">TikTok</button>
+            <button class="plat-btn ig" id="plat-ig" onclick="togglePlat('ig')">Instagram</button>
+          </div>
+        </div>
+        <div class="fgroup">
+          <div class="flabel">Content type</div>
+          <select id="m-type">
+            <option>Reel / TikTok</option><option>Carousel</option>
+            <option>Static post</option><option>Story</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="frow cols2">
+        <div class="fgroup">
+          <div class="flabel">Post date</div>
+          <input type="date" id="m-date" oninput="updateGcalLink()" />
+        </div>
+        <div class="fgroup">
+          <div class="flabel">Time</div>
+          <input type="time" id="m-time" value="10:00" oninput="updateGcalLink()" />
+        </div>
+      </div>
+
+      <div class="frow cols2">
+        <div class="fgroup">
+          <div class="flabel">Reference / inspo link</div>
+          <input type="url" id="m-link" placeholder="https://tiktok.com/…" autocomplete="off" />
+        </div>
+        <div class="fgroup">
+          <div class="flabel">Final video link</div>
+          <input type="url" id="m-video" placeholder="Drive / Dropbox / TikTok draft…" autocomplete="off" oninput="updateGcalLink()" />
+        </div>
+      </div>
+
+      <div class="fgroup">
+        <div class="flabel">Caption</div>
+        <div class="copy-block">
+          <div class="copy-lbl"><span>Hook — first line</span><span id="hook-cnt" style="font-size:10px"></span></div>
+          <textarea id="m-hook" rows="2" placeholder="Stop-scroll opening line…" oninput="updateCount(this,'hook-cnt')"></textarea>
+          <div class="copy-lbl" style="border-top:1px solid var(--border)"><span>Body copy + CTA</span><span id="body-cnt" style="font-size:10px"></span></div>
+          <textarea id="m-body" rows="4" placeholder="Main copy, emojis, call to action…" oninput="updateCount(this,'body-cnt')"></textarea>
+          <div class="copy-lbl" style="border-top:1px solid var(--border)"><span>Hashtags</span></div>
+          <input type="text" id="m-tags" placeholder="#SkylineLuge #Sentosa #Singapore" autocomplete="off" />
+        </div>
+      </div>
+
+      <div class="fgroup">
+        <div class="flabel">Production notes</div>
+        <textarea id="m-notes" rows="2" placeholder="Assets needed, filming angle, creative direction…"></textarea>
+      </div>
+
+      <div class="frow cols2">
+        <div class="fgroup">
+          <div class="flabel">Status</div>
+          <select id="m-status">
+            <option value="shortlisted">Shortlisted</option>
+            <option value="filming">Filming</option>
+            <option value="editing">Editing</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="posted">Posted</option>
+          </select>
+        </div>
+        <div class="fgroup">
+          <div class="flabel">Add reminder</div>
+          <div class="reminder-row">
+            <button class="btn sm" onclick="downloadICS()">Download .ics</button>
+            <a id="gcal-link" class="gcal-web-link" href="#" target="_blank" rel="noopener" style="display:none">+ Google Cal ↗</a>
+          </div>
+          <div class="reminder-hint">Set date &amp; time first. .ics = iOS/Outlook · Google Cal = web/Android</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn danger sm" id="del-btn" onclick="deletePost()" style="display:none">Delete</button>
+      <div class="modal-footer-right">
+        <button class="btn sm" onclick="closeModal()">Cancel</button>
+        <button class="btn primary sm" onclick="savePost()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let ideas  = JSON.parse(localStorage.getItem('sl-ideas')  || '[]');
+let posts  = JSON.parse(localStorage.getItem('sl-posts')  || '[]');
+let nextId = parseInt(localStorage.getItem('sl-nextId')   || '100');
+let editingId = null, activePlats = [];
+let calYear, calMonth;
+const now = new Date();
+calYear = now.getFullYear(); calMonth = now.getMonth();
+
+const STATUS_NEXT  = { idea:'shortlisted', shortlisted:'filming', filming:'editing', editing:'idea' };
+const STATUS_LABEL = { idea:'Idea', shortlisted:'Shortlisted', filming:'Filming', editing:'Editing', scheduled:'Scheduled', posted:'Posted' };
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function save() {
+  localStorage.setItem('sl-ideas',  JSON.stringify(ideas));
+  localStorage.setItem('sl-posts',  JSON.stringify(posts));
+  localStorage.setItem('sl-nextId', String(nextId));
+}
+
+function switchTab(t) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + t));
+  if (t === 'calendar') renderCalendar();
+  if (t === 'schedule') renderSchedule();
+}
+
+// ── Idea Bank ───────────────────────────────────────────────
+function handleIdeaKey(e) { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); addIdea(); } }
+function autoResize(el)   { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,100)+'px'; }
+
+function addIdea() {
+  const inp  = document.getElementById('idea-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  ideas.unshift({ id: nextId++, text, ts: Date.now(), status: 'idea' });
+  save(); inp.value=''; inp.style.height='auto';
+  renderIdeas(); updateCounts();
+  setTimeout(() => document.getElementById('ideas-feed').scrollTo({top:0,behavior:'smooth'}), 50);
+}
+
+function deleteIdea(id)    { ideas = ideas.filter(x=>x.id!==id); save(); renderIdeas(); updateCounts(); }
+function cycleIdeaStatus(id) {
+  const i = ideas.find(x=>x.id===id);
+  if (i) { i.status = STATUS_NEXT[i.status]||'idea'; save(); renderIdeas(); }
+}
+function promoteIdea(id) {
+  const i = ideas.find(x=>x.id===id);
+  if (!i) return;
+  i.status='shortlisted'; save();
+  openPostEditor(null, i); switchTab('calendar');
+}
+
+function detectLinks(t)      { return t.match(/(https?:\/\/[^\s]+)/g)||[]; }
+function platformFromUrl(u)  { return u.includes('tiktok.com')?'tiktok':u.includes('instagram.com')||u.includes('instagr.am')?'ig':null; }
+
+function renderIdeas() {
+  const list = document.getElementById('ideas-list');
+  if (!ideas.length) { list.innerHTML='<div class="empty"><div class="e-icon">💡</div>No ideas yet.<br>Type or paste anything below.</div>'; return; }
+  list.innerHTML = ideas.map(idea => {
+    const links = detectLinks(idea.text);
+    const clean = idea.text.replace(/(https?:\/\/[^\s]+)/g,'').trim();
+    const plat  = links.length ? platformFromUrl(links[0]) : null;
+    return `<div class="idea-bubble">
+      ${clean?`<div class="idea-text">${esc(clean)}</div>`:''}
+      ${links.map(l=>{const lp=platformFromUrl(l);return`<a class="idea-link-preview" href="${esc(l)}" target="_blank" rel="noopener"><span style="font-size:14px;flex-shrink:0">${lp==='tiktok'?'⟁':lp==='ig'?'◈':'⤷'}</span><span class="link-url ${lp||''}">${esc(l.length>55?l.slice(0,55)+'…':l)}</span></a>`;}).join('')}
+      <div class="idea-footer">
+        ${plat?`<span class="badge ${plat}">${plat==='tiktok'?'TikTok':'Instagram'}</span>`:''}
+        <span class="badge ${idea.status}">${STATUS_LABEL[idea.status]||idea.status}</span>
+        <span class="idea-time">${fmtRelTime(idea.ts)}</span>
+        <div class="idea-actions">
+          <button class="status-cycle" onclick="cycleIdeaStatus(${idea.id})">→ ${STATUS_LABEL[STATUS_NEXT[idea.status]||'idea']}</button>
+          <button class="btn ghost sm" onclick="promoteIdea(${idea.id})">Schedule →</button>
+          <button class="btn ghost sm danger" onclick="deleteIdea(${idea.id})">✕</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function fmtRelTime(ts) {
+  const d=Date.now()-ts;
+  if(d<60000) return 'just now';
+  if(d<3600000) return Math.floor(d/60000)+'m ago';
+  if(d<86400000) return Math.floor(d/3600000)+'h ago';
+  return new Date(ts).toLocaleDateString('en-SG',{day:'numeric',month:'short'});
+}
+
+// ── Calendar ────────────────────────────────────────────────
+function goToday()      { calYear=now.getFullYear(); calMonth=now.getMonth(); closeDayDetail(); renderCalendar(); }
+function changeMonth(d) { calMonth+=d; if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;} closeDayDetail(); renderCalendar(); }
+
+function chipClass(p) {
+  if (p.status==='posted') return 'posted';
+  return p.platforms&&p.platforms.length===2?'both':(p.platforms&&p.platforms[0])||'tiktok';
+}
+
+function renderCalendar() {
+  document.getElementById('cal-label').textContent = MONTHS[calMonth]+' '+calYear;
+  const grid = document.getElementById('cal-grid');
+  const first = new Date(calYear,calMonth,1).getDay();
+  const days  = new Date(calYear,calMonth+1,0).getDate();
+  const tD=now.getDate(), tM=now.getMonth(), tY=now.getFullYear();
+  let html='';
+  for(let i=0;i<first;i++) html+=`<div class="cal-cell other-month"></div>`;
+  for(let d=1;d<=days;d++) {
+    const isToday   = d===tD&&calMonth===tM&&calYear===tY;
+    const dateStr   = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayPosts  = posts.filter(p=>p.date===dateStr);
+    const chips     = dayPosts.slice(0,3).map(p=>`<div class="cal-chip ${chipClass(p)}" onclick="event.stopPropagation();openDayDetail('${dateStr}')">${esc(p.title)}</div>`).join('');
+    const more      = dayPosts.length>3?`<div style="font-size:9px;color:var(--text3)">+${dayPosts.length-3}</div>`:'';
+    const dots      = dayPosts.map(p=>`<div class="cal-dot ${chipClass(p)}"></div>`).join('');
+    html+=`<div class="cal-cell${isToday?' today':''}" onclick="openDayDetail('${dateStr}')">
+      <div class="cal-date-num">${d}</div>${chips}${more}
+      <div class="cal-dot-row">${dots}</div>
+    </div>`;
+  }
+  grid.innerHTML=html;
+}
+
+function openDayDetail(dateStr) {
+  const dayPosts = posts.filter(p=>p.date===dateStr);
+  const d = new Date(dateStr+'T00:00');
+  const label = d.toLocaleDateString('en-SG',{weekday:'short',day:'numeric',month:'short'});
+  document.getElementById('day-detail-title').textContent = label;
+  const body = document.getElementById('day-detail-body');
+  if(!dayPosts.length) {
+    body.innerHTML = `<button class="day-add-btn" onclick="openPostEditor(null,'${dateStr}')">+ Schedule a post for this day</button>`;
+  } else {
+    body.innerHTML = dayPosts.map(p=>{
+      const pc  = chipClass(p);
+      const plt = (p.platforms||[]).map(x=>x==='tiktok'?'TikTok':'Instagram').join(' · ');
+      return `<div class="day-post-card ${p.status==='posted'?'is-posted':''}" onclick="openPostEditor(${p.id})">
+        <div class="day-post-top">
+          <div class="day-post-title">${esc(p.title||'Untitled')}</div>
+          ${p.time?`<div class="day-post-time">${p.time}</div>`:''}
+        </div>
+        ${p.hook?`<div class="day-post-hook">"${esc(p.hook)}"</div>`:''}
+        ${p.body?`<div class="day-post-body">${esc(p.body)}</div>`:''}
+        ${p.tags?`<div class="day-post-tags">${esc(p.tags)}</div>`:''}
+        ${p.video?`<a class="day-post-video" href="${esc(p.video)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">▶ Final video ↗</a>`:''}
+        <div class="day-post-meta">
+          ${plt?`<span class="badge ${pc}">${plt}</span>`:''}
+          <span class="badge ${p.status||'scheduled'}">${STATUS_LABEL[p.status]||p.status}</span>
+        </div>
+      </div>`;
+    }).join('') + `<button class="day-add-btn" onclick="openPostEditor(null,'${dateStr}')">+ Add another post</button>`;
+  }
+  document.getElementById('day-detail').classList.add('open');
+}
+
+function closeDayDetail() { document.getElementById('day-detail').classList.remove('open'); }
+
+// ── Schedule ────────────────────────────────────────────────
+function renderSchedule() {
+  const list   = document.getElementById('sched-list');
+  const sorted = [...posts].filter(p=>p.date).sort((a,b)=>a.date.localeCompare(b.date));
+  if(!sorted.length){list.innerHTML='<div class="empty"><div class="e-icon">📅</div>No posts yet.<br>Add from the calendar or promote an idea.</div>';return;}
+  list.innerHTML = sorted.map(p=>{
+    const d   = new Date(p.date+'T00:00');
+    const pc  = chipClass(p);
+    const plt = (p.platforms||[]).map(x=>x==='tiktok'?'TikTok':'Instagram').join(' · ');
+    return `<div class="sched-item ${p.status==='posted'?'is-posted':'is-scheduled'}" onclick="openPostEditor(${p.id})">
+      <div class="sched-date-col">
+        <div class="sched-day">${d.getDate()}</div>
+        <div class="sched-mon">${d.toLocaleDateString('en-SG',{month:'short'})}</div>
+        ${p.time?`<div class="sched-time">${p.time}</div>`:''}
+      </div>
+      <div class="sched-content">
+        <div class="sched-title">${esc(p.title||'Untitled')}</div>
+        ${p.hook?`<div class="sched-hook">"${esc(p.hook)}"</div>`:''}
+        <div class="sched-meta">
+          ${plt?`<span class="badge ${pc}">${plt}</span>`:''}
+          <span class="badge idea">${esc(p.type||'')}</span>
+          <span class="badge ${p.status||'scheduled'}">${STATUS_LABEL[p.status]||p.status}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  updateCounts();
+}
+
+// ── Post Editor ─────────────────────────────────────────────
+function openPostEditor(id, pre) {
+  editingId=null; activePlats=[];
+  if(typeof id==='number') {
+    const p=posts.find(x=>x.id===id); if(!p) return;
+    editingId=id;
+    document.getElementById('modal-title').textContent='Edit post';
+    document.getElementById('del-btn').style.display='';
+    set('m-title',p.title||''); set('m-link',p.link||''); set('m-video',p.video||''); set('m-type',p.type||'Reel / TikTok');
+    set('m-date',p.date||''); set('m-time',p.time||'10:00');
+    set('m-hook',p.hook||''); set('m-body',p.body||''); set('m-tags',p.tags||'');
+    set('m-notes',p.notes||''); set('m-status',p.status||'scheduled');
+    activePlats=p.platforms?[...p.platforms]:[];
+  } else {
+    document.getElementById('modal-title').textContent='New post';
+    document.getElementById('del-btn').style.display='none';
+    const isStr = typeof pre==='string';
+    const idea  = pre&&typeof pre==='object'?pre:null;
+    set('m-title', idea?idea.text.replace(/(https?:\/\/[^\s]+)/g,'').trim().slice(0,80):'');
+    set('m-link',  idea?(detectLinks(idea.text)[0]||''):'');
+    set('m-type','Reel / TikTok'); set('m-date',isStr?pre:''); set('m-time','10:00');
+    set('m-hook',''); set('m-body',''); set('m-tags','#SkylineLuge #Sentosa #Singapore');
+    set('m-notes',''); set('m-video',''); set('m-status','scheduled');
+    const dp=idea?(detectLinks(idea.text).map(platformFromUrl).find(Boolean)):null;
+    activePlats=dp?[dp]:[];
+  }
+  updatePlatBtns(); updateGcalLink();
+  updateCount(document.getElementById('m-hook'),'hook-cnt');
+  updateCount(document.getElementById('m-body'),'body-cnt');
+  document.getElementById('modal-wrap').classList.add('open');
+}
+
+function set(id,v){ document.getElementById(id).value=v; }
+function closeModal()          { document.getElementById('modal-wrap').classList.remove('open'); }
+function closeModalOutside(e)  { if(e.target===document.getElementById('modal-wrap')) closeModal(); }
+function togglePlat(p)         { activePlats.includes(p)?activePlats=activePlats.filter(x=>x!==p):activePlats.push(p); updatePlatBtns(); updateGcalLink(); }
+function updatePlatBtns()      { ['tiktok','ig'].forEach(p=>document.getElementById('plat-'+p).classList.toggle('on',activePlats.includes(p))); }
+
+function savePost() {
+  const title=document.getElementById('m-title').value.trim();
+  if(!title){document.getElementById('m-title').focus();return;}
+  const data={title,link:g('m-link'),video:g('m-video'),platforms:[...activePlats],type:g('m-type'),date:g('m-date'),time:g('m-time'),hook:g('m-hook'),body:g('m-body'),tags:g('m-tags'),notes:g('m-notes'),status:g('m-status')};
+  if(editingId!==null){const i=posts.findIndex(x=>x.id===editingId);if(i>-1)posts[i]={...posts[i],...data};}
+  else posts.push({id:nextId++,...data});
+  save(); closeModal(); renderCalendar(); renderSchedule(); updateCounts();
+}
+function g(id){return document.getElementById(id).value.trim();}
+
+function deletePost() {
+  if(editingId===null) return;
+  if(!confirm('Delete this post?')) return;
+  posts=posts.filter(x=>x.id!==editingId);
+  save(); closeModal(); renderCalendar(); renderSchedule(); updateCounts();
+}
+
+// ── Reminders ───────────────────────────────────────────────
+function fmtUTC(date,time) { return new Date(date+'T'+time+':00').toISOString().replace(/[-:.]/g,'').slice(0,15)+'Z'; }
+
+function downloadICS() {
+  const title=g('m-title')||'Post reminder', dateVal=g('m-date'), timeVal=g('m-time')||'10:00';
+  if(!dateVal){alert('Set a date first.');return;}
+  const start=fmtUTC(dateVal,timeVal);
+  const endDt=new Date(new Date(dateVal+'T'+timeVal+':00').getTime()+30*60000);
+  const end=endDt.toISOString().replace(/[-:.]/g,'').slice(0,15)+'Z';
+  const plat=activePlats.map(p=>p==='tiktok'?'TikTok':'Instagram').join(' + ');
+  const parts=[
+    plat,
+    g('m-hook') ? 'HOOK: '+g('m-hook') : '',
+    g('m-body') ? 'CAPTION: '+g('m-body') : '',
+    g('m-tags') ? g('m-tags') : '',
+    g('m-video') ? 'VIDEO: '+g('m-video') : ''
+  ].filter(Boolean);
+  const desc=parts.join('\\n\\n').replace(/,/g,'\\,');
+  const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//SkylineLuge//ContentPlanner//EN','BEGIN:VEVENT',
+    `UID:${Date.now()}@slcontentplanner`,`DTSTAMP:${new Date().toISOString().replace(/[-:.]/g,'').slice(0,15)+'Z'}`,
+    `DTSTART:${start}`,`DTEND:${end}`,`SUMMARY:POST: ${title}`,`DESCRIPTION:${desc}`,'END:VEVENT','END:VCALENDAR'].join('\r\n');
+  const a=document.createElement('a');
+  a.href='data:text/calendar;charset=utf-8,'+encodeURIComponent(ics);
+  a.download='post-reminder.ics';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// Google Calendar direct web link — works on desktop & Android
+function updateGcalLink() {
+  const title=document.getElementById('m-title').value||'Post reminder';
+  const dateVal=document.getElementById('m-date').value;
+  const timeVal=document.getElementById('m-time').value||'10:00';
+  const link=document.getElementById('gcal-link');
+  if(!dateVal){link.style.display='none';return;}
+  const start=fmtUTC(dateVal,timeVal);
+  const endDt=new Date(new Date(dateVal+'T'+timeVal+':00').getTime()+30*60000);
+  const end=endDt.toISOString().replace(/[-:.]/g,'').slice(0,15)+'Z';
+  const plat=activePlats.map(p=>p==='tiktok'?'TikTok':'Instagram').join(' + ');
+  const hook=document.getElementById('m-hook').value;
+  const body=document.getElementById('m-body').value;
+  const tags=document.getElementById('m-tags').value;
+  const video=document.getElementById('m-video').value;
+  const parts=[
+    plat,
+    hook ? 'HOOK: '+hook : '',
+    body ? 'CAPTION: '+body : '',
+    tags || '',
+    video ? 'VIDEO: '+video : ''
+  ].filter(Boolean);
+  const details=encodeURIComponent(parts.join('\n\n'));
+  link.href=`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent('POST: '+title)}&dates=${start}/${end}&details=${details}`;
+  link.style.display='';
+}
+
+// ── Export / Import ──────────────────────────────────────────
+function exportJSON() {
+  const a=document.createElement('a');
+  a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify({ideas,posts,exportedAt:new Date().toISOString(),version:1},null,2));
+  a.download='skyline-luge-content-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+function importJSON(event) {
+  const file=event.target.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try {
+      const data=JSON.parse(e.target.result);
+      if(!data.ideas||!data.posts) throw 0;
+      if(!confirm(`Import ${data.ideas.length} ideas and ${data.posts.length} posts?\n\nMerges with existing data — nothing deleted.\n\nExported: ${data.exportedAt?new Date(data.exportedAt).toLocaleString('en-SG'):'unknown'}`)) return;
+      const merge=(ex,inc)=>{const m=new Map(ex.map(x=>[x.id,x]));inc.forEach(x=>m.set(x.id,x));return Array.from(m.values());};
+      ideas=merge(ideas,data.ideas); posts=merge(posts,data.posts);
+      nextId=Math.max(nextId,...[...ideas,...posts].map(x=>x.id))+1;
+      save(); renderIdeas(); renderCalendar(); renderSchedule(); updateCounts();
+      alert('Import successful!');
+    } catch{alert('Could not read file.');}
+    event.target.value='';
+  };
+  r.readAsText(file);
+}
+
+// ── Helpers ──────────────────────────────────────────────────
+function updateCount(el,id){ document.getElementById(id).textContent=el.value.length?el.value.length+' chars':''; }
+function updateCounts() {
+  document.getElementById('cnt-ideas').textContent=ideas.length;
+  document.getElementById('cnt-sched').textContent=posts.filter(p=>p.status==='scheduled').length;
+}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+renderIdeas(); renderCalendar(); updateCounts();
+</script>
+</body>
+</html>
